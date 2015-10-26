@@ -1,5 +1,5 @@
 {
-  "name": "react-native-audio",
+  "name": "react-native-audio-player",
   "version": "0.0.1",
   "description": "Audio player for react-native",
   "main": "index.android.js",
