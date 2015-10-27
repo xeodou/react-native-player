@@ -37,7 +37,7 @@ dependencies {
                 .setApplication(getApplication())
                 .setBundleAssetName("index.android.bundle")
                 .setJSMainModuleName("index.android")
-                .addPackage(new ReactAudioManager())  // <------- here
+                .addPackage(new ReactPlayerManager())  // <------- here
                 .addPackage(new MainReactPackage())
                 .setUseDeveloperSupport(BuildConfig.DEBUG)
                 .setInitialLifecycleState(LifecycleState.RESUMED)
