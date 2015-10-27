@@ -6,9 +6,8 @@
 package com.xeodou.audio;
 
 
-import android.media.AudioManager;
-import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Looper;
 import android.support.annotation.Nullable;
 
 import com.facebook.react.bridge.Arguments;
@@ -17,25 +16,35 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
+import com.google.android.exoplayer.ExoPlaybackException;
+import com.google.android.exoplayer.ExoPlayer;
+import com.google.android.exoplayer.MediaCodecAudioTrackRenderer;
+import com.google.android.exoplayer.extractor.ExtractorSampleSource;
+import com.google.android.exoplayer.upstream.Allocator;
+import com.google.android.exoplayer.upstream.DataSource;
+import com.google.android.exoplayer.upstream.DefaultAllocator;
+import com.google.android.exoplayer.upstream.DefaultUriDataSource;
 
-import java.io.IOException;
 
-
-public class ReactAudio extends ReactContextBaseJavaModule implements MediaPlayer.OnPreparedListener{
+public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.Listener {
 
     public static final String REACT_CLASS = "RCTAudio";
 
-    private MediaPlayer mediaPlayer = null;
+    private static final int BUFFER_SEGMENT_SIZE = 64 * 1024;
+    private static final int BUFFER_SEGMENT_COUNT = 256;
+
+
+    private ExoPlayer player = null;
     private ReactApplicationContext context;
 
     public ReactAudio(ReactApplicationContext reactContext) {
-      super(reactContext);
+        super(reactContext);
         this.context = reactContext;
     }
 
     @Override
     public String getName() {
-      return REACT_CLASS;
+        return REACT_CLASS;
     }
 
     private void sendEvent(String eventName,
@@ -47,47 +56,42 @@ public class ReactAudio extends ReactContextBaseJavaModule implements MediaPlaye
 
     @ReactMethod
     public void prepare(final String url) {
-        try {
-            if(mediaPlayer == null) {
-                mediaPlayer = new MediaPlayer();
-                mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-            }
-            mediaPlayer.setDataSource(this.context, Uri.parse(url));
-            mediaPlayer.prepareAsync();
-        } catch (IOException e) {
-            e.printStackTrace();
-            WritableMap params = Arguments.createMap();
-            params.putString("msg", e.getMessage());
-            sendEvent("error", params);
-            return;
+        Looper.prepare();
+        if (player == null) {
+            player = ExoPlayer.Factory.newInstance(1);
+            Uri uri = Uri.parse(url);
+
+            Allocator allocator = new DefaultAllocator(BUFFER_SEGMENT_SIZE);
+
+            DataSource dataSource = new DefaultUriDataSource(context, null);
+            ExtractorSampleSource sampleSource = new ExtractorSampleSource(uri, dataSource, allocator,
+                    BUFFER_SEGMENT_COUNT * BUFFER_SEGMENT_SIZE);
+
+            MediaCodecAudioTrackRenderer render = new MediaCodecAudioTrackRenderer(sampleSource);
+            player.prepare(render);
+            player.addListener(this);
+            player.setPlayWhenReady(true);
         }
+
     }
 
-    @ReactMethod
-    public void stop() {
-        if (mediaPlayer != null && mediaPlayer.isPlaying()) {
-            mediaPlayer.stop();
-        }
-    }
-
-    @ReactMethod
-    public void start() {
-        if (!mediaPlayer.isPlaying()) {
-            mediaPlayer.start();
-        }
-    }
-
-    @ReactMethod
-    public void pause() {
-        if (mediaPlayer.isPlaying()) {
-            mediaPlayer.pause();
+    @Override
+    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+        if (playbackState == ExoPlayer.STATE_ENDED) {
+            player.release();
+            player = null;
         }
     }
 
     @Override
-    public void onPrepared(MediaPlayer mediaPlayer) {
-        mediaPlayer.start();
+    public void onPlayWhenReadyCommitted() {
+
+    }
+
+    @Override
+    public void onPlayerError(ExoPlaybackException error) {
         WritableMap params = Arguments.createMap();
-        sendEvent("prepare", params);
+        params.putString("msg", error.getMessage());
+        sendEvent("error", params);
     }
 }
