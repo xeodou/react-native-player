@@ -28,6 +28,8 @@ dependencies {
 ```
 * Register module in `MainActivity.java`
 ```
+import com.xeodou.rctplayer.*;  // <--- import
+
 @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,6 +53,8 @@ dependencies {
 
 #### Usage
 ```
+var RCTDeviceEventEmitter = require('RCTDeviceEventEmitter');
+var Subscribable = require('Subscribable');
 var RCTAudio = require('react-native-player');
 
 
@@ -125,6 +129,8 @@ var doubanbook = React.createClass({
 
       </View>
     );
+  }
+})
 
 ```
 
