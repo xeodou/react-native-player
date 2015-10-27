@@ -28,6 +28,8 @@ dependencies {
 ```
 * Register module in `MainActivity.java`
 ```
+import com.xeodou.rctplayer.*;  // <--- import
+
 @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
