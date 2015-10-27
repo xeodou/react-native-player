@@ -1,6 +1,6 @@
 {
   "name": "react-native-player",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Audio player for react-native",
   "main": "index.js",
   "scripts": {
