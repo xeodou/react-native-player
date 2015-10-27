@@ -1,6 +1,6 @@
-### React-Native-Audio-Player
+### React-Native-Player
 
-> Audio Player for React-Native
+> Media Player for React-Native
 
 *Only Android support now.*
 
@@ -51,7 +51,7 @@ dependencies {
 
 #### Usage
 ```
-var RCTAudio = require('react-native-audio');
+var RCTAudio = require('react-native-player');
 
 
 var doubanbook = React.createClass({
