@@ -53,6 +53,8 @@ import com.xeodou.rctplayer.*;  // <--- import
 
 #### Usage
 ```
+var RCTDeviceEventEmitter = require('RCTDeviceEventEmitter');
+var Subscribable = require('Subscribable');
 var RCTAudio = require('react-native-player');
 
 
@@ -127,6 +129,8 @@ var doubanbook = React.createClass({
 
       </View>
     );
+  }
+})
 
 ```
 
