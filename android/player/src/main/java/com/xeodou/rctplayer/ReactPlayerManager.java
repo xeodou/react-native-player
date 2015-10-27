@@ -2,7 +2,7 @@
 * @Author: xeodou
 * @Date:   2015
 */
-package com.xeodou.audio;
+package com.xeodou.rctplayer;
 
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.JavaScriptModule;
@@ -15,7 +15,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class ReactAudioManager implements ReactPackage {
+public class ReactPlayerManager implements ReactPackage {
 
     @Override
     public List<Class<? extends JavaScriptModule>> createJSModules() {

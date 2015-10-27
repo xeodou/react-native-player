@@ -3,12 +3,11 @@
 * @Date:   2015
 */
 
-package com.xeodou.audio;
+package com.xeodou.rctplayer;
 
 
 import android.net.Uri;
 import android.os.Build;
-import android.os.Looper;
 import android.support.annotation.Nullable;
 
 import com.facebook.infer.annotation.Assertions;
