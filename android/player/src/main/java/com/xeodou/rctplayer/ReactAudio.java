@@ -131,6 +131,30 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
     }
 
     @ReactMethod
+    public boolean isPlaying() {
+        Assertions.assertNotNull(player);
+        return playerControl.isPlaying();
+    }
+
+    @ReactMethod
+    public int getDuration() {
+        Assertions.assertNotNull(player);
+        return playerControl.getDuration();
+    }
+
+    @ReactMethod
+    public int getCurrentPosition() {
+        Assertions.assertNotNull(player);
+        return playerControl.getCurrentPosition();
+    }
+
+    @ReactMethod
+    public int getBufferPercentage() {
+        Assertions.assertNotNull(player);
+        return playerControl.getBufferPercentage();
+    }
+
+    @ReactMethod
     public void stop() {
         Assertions.assertNotNull(player);
         player.release();
