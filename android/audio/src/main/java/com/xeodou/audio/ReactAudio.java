@@ -7,6 +7,7 @@ package com.xeodou.audio;
 
 
 import android.net.Uri;
+import android.os.Build;
 import android.os.Looper;
 import android.support.annotation.Nullable;
 
@@ -55,7 +56,39 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
     }
 
     @ReactMethod
-    public void prepare(final String url) {
+    public void play(String url) {
+        String agent = getDefaultUserAgent();
+        this.play(url, agent);
+    }
+
+    public static String getDefaultUserAgent() {
+        StringBuilder result = new StringBuilder(64);
+        result.append("Dalvik/");
+        result.append(System.getProperty("java.vm.version")); // such as 1.1.0
+        result.append(" (Linux; U; Android ");
+
+        String version = Build.VERSION.RELEASE; // "1.0" or "3.4b5"
+        result.append(version.length() > 0 ? version : "1.0");
+
+        // add the model for the release build
+        if ("REL".equals(Build.VERSION.CODENAME)) {
+            String model = Build.MODEL;
+            if (model.length() > 0) {
+                result.append("; ");
+                result.append(model);
+            }
+        }
+        String id = Build.ID; // "MASTER" or "M4-rc20"
+        if (id.length() > 0) {
+            result.append(" Build/");
+            result.append(id);
+        }
+        result.append(")");
+        return result.toString();
+    }
+
+    @ReactMethod
+    public void play(String url, String agent) {
         Looper.prepare();
         if (player == null) {
             player = ExoPlayer.Factory.newInstance(1);
@@ -63,7 +96,7 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
 
             Allocator allocator = new DefaultAllocator(BUFFER_SEGMENT_SIZE);
 
-            DataSource dataSource = new DefaultUriDataSource(context, null);
+            DataSource dataSource = new DefaultUriDataSource(context, agent);
             ExtractorSampleSource sampleSource = new ExtractorSampleSource(uri, dataSource, allocator,
                     BUFFER_SEGMENT_COUNT * BUFFER_SEGMENT_SIZE);
 
