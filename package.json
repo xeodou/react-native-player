@@ -6,12 +6,13 @@
   "scripts": {
     "test": "npm test"
   },
-  "repository": "git@github.com:xeodou/react-native-audio.git",
+  "repository": "git@github.com:xeodou/react-native-player.git",
   "keywords": [
     "react-native",
     "android",
     "TarsosDSP"
   ],
   "author": "xeodou@gmail.com",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {}
 }
