@@ -11,6 +11,7 @@ import android.os.Build;
 import android.os.Looper;
 import android.support.annotation.Nullable;
 
+import com.facebook.infer.annotation.Assertions;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -25,17 +26,19 @@ import com.google.android.exoplayer.upstream.Allocator;
 import com.google.android.exoplayer.upstream.DataSource;
 import com.google.android.exoplayer.upstream.DefaultAllocator;
 import com.google.android.exoplayer.upstream.DefaultUriDataSource;
+import com.google.android.exoplayer.util.PlayerControl;
 
 
 public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.Listener {
 
-    public static final String REACT_CLASS = "RCTAudio";
+    public static final String REACT_CLASS = "ReactAudio";
 
     private static final int BUFFER_SEGMENT_SIZE = 64 * 1024;
     private static final int BUFFER_SEGMENT_COUNT = 256;
 
 
     private ExoPlayer player = null;
+    private PlayerControl playerControl = null;
     private ReactApplicationContext context;
 
     public ReactAudio(ReactApplicationContext reactContext) {
@@ -55,13 +58,7 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
                 .emit(eventName, params);
     }
 
-    @ReactMethod
-    public void play(String url) {
-        String agent = getDefaultUserAgent();
-        this.play(url, agent);
-    }
-
-    public static String getDefaultUserAgent() {
+    private static String getDefaultUserAgent() {
         StringBuilder result = new StringBuilder(64);
         result.append("Dalvik/");
         result.append(System.getProperty("java.vm.version")); // such as 1.1.0
@@ -88,10 +85,11 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
     }
 
     @ReactMethod
-    public void play(String url, String agent) {
-        Looper.prepare();
+    public void prepareWithAgent(String url, String agent, boolean auto) {
         if (player == null) {
             player = ExoPlayer.Factory.newInstance(1);
+            playerControl = new PlayerControl(player);
+
             Uri uri = Uri.parse(url);
 
             Allocator allocator = new DefaultAllocator(BUFFER_SEGMENT_SIZE);
@@ -101,18 +99,66 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
                     BUFFER_SEGMENT_COUNT * BUFFER_SEGMENT_SIZE);
 
             MediaCodecAudioTrackRenderer render = new MediaCodecAudioTrackRenderer(sampleSource);
+
             player.prepare(render);
             player.addListener(this);
-            player.setPlayWhenReady(true);
+            player.setPlayWhenReady(auto);
         }
 
     }
 
+    @ReactMethod
+    public void prepare(String url, boolean auto) {
+        String agent = getDefaultUserAgent();
+        this.prepareWithAgent(url, agent, auto);
+    }
+
+    @ReactMethod
+    public void start() {
+        Assertions.assertNotNull(player);
+        playerControl.start();
+    }
+
+    @ReactMethod
+    public void pause() {
+        Assertions.assertNotNull(player);
+        playerControl.pause();
+    }
+
+    @ReactMethod
+    public void resume() {
+        Assertions.assertNotNull(player);
+        playerControl.start();
+    }
+
+    @ReactMethod
+    public void stop() {
+        Assertions.assertNotNull(player);
+        player.release();
+        player = null;
+    }
+
+    @ReactMethod
+    public void seekTo(int timeMillis) {
+        Assertions.assertNotNull(player);
+        playerControl.seekTo(timeMillis);
+    }
+
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-        if (playbackState == ExoPlayer.STATE_ENDED) {
-            player.release();
-            player = null;
+        WritableMap params = Arguments.createMap();
+        switch (playbackState) {
+            case ExoPlayer.STATE_ENDED:
+                player.release();
+                player = null;
+                sendEvent("end", params);
+                break;
+            case ExoPlayer.STATE_READY:
+                sendEvent("ready", params);
+                break;
+            case ExoPlayer.STATE_PREPARING:
+                sendEvent("prepare", params);
+                break;
         }
     }
 
