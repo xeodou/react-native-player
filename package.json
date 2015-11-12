@@ -1,6 +1,6 @@
 {
   "name": "react-native-player",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Media player for react-native",
   "main": "index.js",
   "scripts": {
