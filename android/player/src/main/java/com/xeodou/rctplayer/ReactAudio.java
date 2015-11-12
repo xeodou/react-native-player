@@ -27,6 +27,7 @@ import com.google.android.exoplayer.upstream.DataSource;
 import com.google.android.exoplayer.upstream.DefaultAllocator;
 import com.google.android.exoplayer.upstream.DefaultUriDataSource;
 import com.google.android.exoplayer.util.PlayerControl;
+import com.google.android.exoplayer.chunk.Format;
 
 
 public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.Listener {
@@ -203,6 +204,7 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
     public void onLoadCompleted(int sourceId, long bytesLoaded, int type, int trigger, Format format,
            long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs) {
         // to make sure media is loaded
+        WritableMap params = Arguments.createMap();
         sendEvent("loadCompleted", params);
     }
 
