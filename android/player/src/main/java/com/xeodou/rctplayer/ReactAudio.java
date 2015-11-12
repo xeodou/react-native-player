@@ -16,6 +16,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.Callback;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.google.android.exoplayer.ExoPlaybackException;
 import com.google.android.exoplayer.ExoPlayer;
@@ -137,27 +138,27 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
     }
 
     @ReactMethod
-    public Boolean isPlaying() {
+    public void isPlaying(Callback cb) {
         Assertions.assertNotNull(player);
-        return playerControl.isPlaying();
+        cb.invoke(playerControl.isPlaying());
     }
 
     @ReactMethod
-    public int getDuration() {
+    public void getDuration(Callback cb) {
         Assertions.assertNotNull(player);
-        return playerControl.getDuration();
+        cb.invoke(playerControl.getDuration());
     }
 
     @ReactMethod
-    public int getCurrentPosition() {
+    public void getCurrentPosition(Callback cb) {
         Assertions.assertNotNull(player);
-        return playerControl.getCurrentPosition();
+        cb.invoke(playerControl.getCurrentPosition());
     }
 
     @ReactMethod
-    public int getBufferPercentage() {
+    public void getBufferPercentage(Callback cb) {
         Assertions.assertNotNull(player);
-        return playerControl.getBufferPercentage();
+        cb.invoke(playerControl.getBufferPercentage());
     }
 
     @ReactMethod
