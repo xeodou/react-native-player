@@ -57,6 +57,12 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
                 .emit(eventName, params);
     }
 
+    @ReactMethod
+    public void removeListener() {
+        // this could be used on React component unmount
+        player.removeListener(this);
+    }
+
     private static String getDefaultUserAgent() {
         StringBuilder result = new StringBuilder(64);
         result.append("Dalvik/");
@@ -131,7 +137,7 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
     }
 
     @ReactMethod
-    public boolean isPlaying() {
+    public Boolean isPlaying() {
         Assertions.assertNotNull(player);
         return playerControl.isPlaying();
     }
@@ -171,18 +177,32 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
         WritableMap params = Arguments.createMap();
         switch (playbackState) {
+            // event list from official demo example
+            case ExoPlayer.STATE_BUFFERING:
+                sendEvent("buffering", params);
+                break;
             case ExoPlayer.STATE_ENDED:
                 player.release();
                 player = null;
                 sendEvent("end", params);
                 break;
+            case ExoPlayer.STATE_IDLE:
+                sendEvent("idle", params);
+                break;
+            case ExoPlayer.STATE_PREPARING:
+                sendEvent("preparing", params);
+                break;
             case ExoPlayer.STATE_READY:
                 sendEvent("ready", params);
                 break;
-            case ExoPlayer.STATE_PREPARING:
-                sendEvent("prepare", params);
-                break;
         }
+    }
+
+    @ReactMethod
+    public void onLoadCompleted(int sourceId, long bytesLoaded, int type, int trigger, Format format,
+           long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs) {
+        // to make sure media is loaded
+        sendEvent("loadCompleted", params);
     }
 
     @Override
