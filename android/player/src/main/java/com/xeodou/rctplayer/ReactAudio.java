@@ -91,33 +91,35 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
         return result.toString();
     }
 
-    @ReactMethod
-    public void prepareWithAgent(String url, String agent, boolean auto) {
-        if (player == null) {
-            player = ExoPlayer.Factory.newInstance(1);
-            playerControl = new PlayerControl(player);
+    private MediaCodecAudioTrackRenderer buildRender(String url, String agent, boolean auto) {
+        Uri uri = Uri.parse(url);
 
-            Uri uri = Uri.parse(url);
+        Allocator allocator = new DefaultAllocator(BUFFER_SEGMENT_SIZE);
 
-            Allocator allocator = new DefaultAllocator(BUFFER_SEGMENT_SIZE);
+        DataSource dataSource = new DefaultUriDataSource(context, agent);
+        ExtractorSampleSource sampleSource = new ExtractorSampleSource(uri, dataSource, allocator,
+                BUFFER_SEGMENT_COUNT * BUFFER_SEGMENT_SIZE);
 
-            DataSource dataSource = new DefaultUriDataSource(context, agent);
-            ExtractorSampleSource sampleSource = new ExtractorSampleSource(uri, dataSource, allocator,
-                    BUFFER_SEGMENT_COUNT * BUFFER_SEGMENT_SIZE);
+        MediaCodecAudioTrackRenderer render = new MediaCodecAudioTrackRenderer(sampleSource);
 
-            MediaCodecAudioTrackRenderer render = new MediaCodecAudioTrackRenderer(sampleSource);
-
-            player.prepare(render);
-            player.addListener(this);
-            player.setPlayWhenReady(auto);
-        }
-
+        return render;
     }
 
     @ReactMethod
     public void prepare(String url, boolean auto) {
+        if (player != null ) {
+            player.release();
+            player = null;
+        }
+
+        player = ExoPlayer.Factory.newInstance(1);
+        playerControl = new PlayerControl(player);
+
         String agent = getDefaultUserAgent();
-        this.prepareWithAgent(url, agent, auto);
+        MediaCodecAudioTrackRenderer render = this.buildRender(url, agent, auto);
+        player.prepare(render);
+        player.addListener(this);
+        player.setPlayWhenReady(auto);
     }
 
     @ReactMethod
