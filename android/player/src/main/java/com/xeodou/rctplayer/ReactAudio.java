@@ -202,7 +202,6 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
         }
     }
 
-    @ReactMethod
     public void onLoadCompleted(int sourceId, long bytesLoaded, int type, int trigger, Format format,
            long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs) {
         // to make sure media is loaded
