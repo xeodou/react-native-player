@@ -1,10 +1,10 @@
-### React-Native-Player
+## React-Native-Player
 
 > Audio Player for React-Native
 
 *Only Android support now.*
 
-#### Installation
+### Installation
 
 First, download the library from npm:
 
@@ -34,7 +34,7 @@ dependencies {
 * Register module in `MainApplication.java`
 ```
 ...
-import com.facebook.react.shell.MainReactPackage;   // Add this line
+import com.xeodou.rctplayer.ReactPlayerManager;;   // Add this line
 
 import java.util.Arrays;
 import java.util.List;
@@ -51,7 +51,7 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
-          new CustomToastPackage()  // Add this line
+          new ReactPlayerManager()  // Add this line
       );
     }
   };
@@ -59,7 +59,7 @@ public class MainApplication extends Application implements ReactApplication {
 }
 ```
 
-#### Usage
+### Usage
 ```
 import DeviceEventEmitter from 'react-native';
 import RCTAudio from 'react-native-player';
