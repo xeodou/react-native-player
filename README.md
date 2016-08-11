@@ -1,15 +1,20 @@
 ### React-Native-Player
 
-> Media Player for React-Native
+> Audio Player for React-Native
 
 *Only Android support now.*
 
-#### Integrate
+#### Installation
 
-##### Android
+First, download the library from npm:
 
-* Install via npm
-`npm i react-native-player --save-dev`
+`npm install react-native-player --save`
+
+Then you must install the native dependencies. You can use following command to add native dependencies automatically.
+
+`react-native link react-native-player`
+
+or link manually like so:
 
 * Add dependency to `android/settings.gradle`
 ```
@@ -26,111 +31,76 @@ dependencies {
     compile project(':react-native-player')
 }
 ```
-* Register module in `MainActivity.java`
+* Register module in `MainApplication.java`
 ```
-import com.xeodou.rctplayer.*;  // <--- import
+...
+import com.facebook.react.shell.MainReactPackage;   // Add this line
 
-@Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mReactRootView = new ReactRootView(this);
+import java.util.Arrays;
+import java.util.List;
 
-        mReactInstanceManager = ReactInstanceManager.builder()
-                .setApplication(getApplication())
-                .setBundleAssetName("index.android.bundle")
-                .setJSMainModuleName("index.android")
-                .addPackage(new ReactPlayerManager())  // <------- here
-                .addPackage(new MainReactPackage())
-                .setUseDeveloperSupport(BuildConfig.DEBUG)
-                .setInitialLifecycleState(LifecycleState.RESUMED)
-                .build();
+public class MainApplication extends Application implements ReactApplication {
 
-        mReactRootView.startReactApplication(mReactInstanceManager, "doubanbook", null);
-
-        setContentView(mReactRootView);
+  private final ReactNativeHost mReactNativeHost = new ReactNativeHost(this) {
+    @Override
+    protected boolean getUseDeveloperSupport() {
+      return BuildConfig.DEBUG;
     }
+
+    @Override
+    protected List<ReactPackage> getPackages() {
+      return Arrays.<ReactPackage>asList(
+          new MainReactPackage(),
+          new CustomToastPackage()  // Add this line
+      );
+    }
+  };
+  ...
+}
 ```
 
 #### Usage
 ```
-var RCTDeviceEventEmitter = require('RCTDeviceEventEmitter');
-var Subscribable = require('Subscribable');
-var RCTAudio = require('react-native-player');
+import DeviceEventEmitter from 'react-native';
+import RCTAudio from 'react-native-player';
 
+class Sample extends Component {
 
-var doubanbook = React.createClass({
-
-  mixins: [Subscribable.Mixin],
-
-  componentWillMount: function() {
-      this.addListenerOn(RCTDeviceEventEmitter,
-                       'error',
-                       this.onError);
-      this.addListenerOn(RCTDeviceEventEmitter,
-                       'end',
-                       this.onEnd);
-      this.addListenerOn(RCTDeviceEventEmitter,
-                       'ready',
-                       this.onReady);
-  },
-
-  componentDidMount: function() {
-
-  },
-
-  onError: function(err) {
-    console.log(err)
-  },
-
-  onEnd: function() {
-    console.log("end")
-  },
-
-  onReady: function() {
-    console.log("onReady")
-  },
-
-  start: function() {
-    RCTAudio.start()
-  },
-
-  pause: function() {
-    RCTAudio.pause()
-  },
-
-  stop: function() {
-    RCTAudio.stop()
-  },
-
-  buttonClicked: function() {
-    RCTAudio.prepare("https://api.soundcloud.com/tracks/223379813/stream?client_id=f4323c6f7c0cd73d2d786a2b1cdae80c", true)
-  },
+  componentWillMount() {
+    DeviceEventEmitter.addListener('onPlayerStateChanged', (e) => console.log(e));
+  }
+  
+  prepare() {
+    RCTAudio.prepare("https://api.soundcloud.com/tracks/223379813/stream?client_id=f4323c6f7c0cd73d2d786a2b1cdae80c", false);
+  }
+  
+  pause() {
+    RCTAudio.pause();
+  }
+  
+  play() {
+    RCTAudio.start();
+  }
 
   render: function() {
     return (
       <View style={styles.container}>
-        <TouchableHighlight
-          style={styles.button}
-          onPress={this.buttonClicked}>
+        <TouchableHighlight style={styles.button} onPress={this.prepare.bind(this)}>
             <Text >Prepare!</Text>
         </TouchableHighlight>
 
-        <TouchableHighlight
-          style={styles.button}
-          onPress={this.pause}>
+        <TouchableHighlight style={styles.button} onPress={this.pause.bind(this)}>
             <Text >Pause!</Text>
         </TouchableHighlight>
 
-         <TouchableHighlight
-          style={styles.button}
-          onPress={this.start}>
-            <Text >Start!</Text>
+         <TouchableHighlight style={styles.button} onPress={this.play.bind(this)}>
+            <Text >Play!</Text>
         </TouchableHighlight>
 
       </View>
     );
-  }
-})
+  }  
+}
 
 ```
 
