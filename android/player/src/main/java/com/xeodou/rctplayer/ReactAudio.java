@@ -29,6 +29,8 @@ import com.google.android.exoplayer.upstream.DefaultUriDataSource;
 import com.google.android.exoplayer.util.PlayerControl;
 import com.google.android.exoplayer.chunk.Format;
 
+import com.xeodou.rctplayer.JavaScriptTimer.TaskHandle;
+
 
 public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.Listener {
 
@@ -41,6 +43,7 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
     private ExoPlayer player = null;
     private PlayerControl playerControl = null;
     private ReactApplicationContext context;
+    private TaskHandle handle = null;
 
     public ReactAudio(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -120,24 +123,37 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
         player.prepare(render);
         player.addListener(this);
         player.setPlayWhenReady(auto);
+
+        if (auto == true) {
+            onUpdatePosition();
+        }
     }
 
     @ReactMethod
     public void start() {
         Assertions.assertNotNull(player);
         playerControl.start();
+
+        // clear setInterval
+        handle.invalidate();
     }
 
     @ReactMethod
     public void pause() {
         Assertions.assertNotNull(player);
         playerControl.pause();
+
+        // clear setInterval
+        handle.invalidate();
     }
 
     @ReactMethod
     public void resume() {
         Assertions.assertNotNull(player);
         playerControl.start();
+
+        // Send event for current position to JS
+        onUpdatePosition();
     }
 
     @ReactMethod
@@ -169,6 +185,9 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
         Assertions.assertNotNull(player);
         player.stop();
         playerControl.seekTo(0);
+
+        // clear setInterval
+        handle.invalidate();
     }
 
     @ReactMethod
@@ -176,6 +195,9 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
         Assertions.assertNotNull(player);
         player.release();
         player = null;
+
+        // clear setInterval
+        handle.invalidate();
     }
 
     @ReactMethod
@@ -222,6 +244,25 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
         }
 
         sendEvent("onPlayerStateChanged", params);
+    }
+
+    public void onUpdatePosition() {
+
+        // Remove previous timer
+        if (handle != null) {
+            handle.invalidate();
+        }
+
+        handle = JavaScriptTimer.setInterval(new Runnable() {
+            public void run() {
+                int currentPosition = playerControl.getCurrentPosition();
+
+                WritableMap params = Arguments.createMap();
+                params.putInt("currentPosition", currentPosition);
+
+                sendEvent("onUpdatePosition", params);
+            }
+        }, 200);
     }
 
     /**
