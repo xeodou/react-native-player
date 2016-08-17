@@ -167,6 +167,13 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
     @ReactMethod
     public void stop() {
         Assertions.assertNotNull(player);
+        player.stop();
+        playerControl.seekTo(0);
+    }
+
+    @ReactMethod
+    public void release() {
+        Assertions.assertNotNull(player);
         player.release();
         player = null;
     }
@@ -210,8 +217,8 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
         */
 
         if(playbackState == ExoPlayer.STATE_ENDED) {
-            player.release();
-            player = null;
+            player.stop();
+            playerControl.seekTo(0);
         }
 
         sendEvent("onPlayerStateChanged", params);
