@@ -15,9 +15,9 @@
   "author": "xeodou@gmail.com",
   "license": "MIT",
   "devDependencies": {
-    "react-native": "^0.31.0"
+    "react-native": "^0.32.0"
   },
   "peerDependencies": {
-    "react-native":"^0.31.0"
+    "react-native":"^0.32.0"
   }
 }
