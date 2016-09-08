@@ -29,6 +29,8 @@ import com.google.android.exoplayer.upstream.DefaultUriDataSource;
 import com.google.android.exoplayer.util.PlayerControl;
 import com.google.android.exoplayer.chunk.Format;
 
+import com.xeodou.rctplayer.JavaScriptTimer.TaskHandle;
+
 
 public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.Listener {
 
@@ -41,6 +43,7 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
     private ExoPlayer player = null;
     private PlayerControl playerControl = null;
     private ReactApplicationContext context;
+    private TaskHandle handle = null;
 
     public ReactAudio(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -120,24 +123,37 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
         player.prepare(render);
         player.addListener(this);
         player.setPlayWhenReady(auto);
+
+        if (auto == true) {
+            onUpdatePosition();
+        }
     }
 
     @ReactMethod
     public void start() {
         Assertions.assertNotNull(player);
         playerControl.start();
+
+        // clear setInterval
+        handle.invalidate();
     }
 
     @ReactMethod
     public void pause() {
         Assertions.assertNotNull(player);
         playerControl.pause();
+
+        // clear setInterval
+        handle.invalidate();
     }
 
     @ReactMethod
     public void resume() {
         Assertions.assertNotNull(player);
         playerControl.start();
+
+        // Send event for current position to JS
+        onUpdatePosition();
     }
 
     @ReactMethod
@@ -167,8 +183,21 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
     @ReactMethod
     public void stop() {
         Assertions.assertNotNull(player);
+        player.stop();
+        playerControl.seekTo(0);
+
+        // clear setInterval
+        handle.invalidate();
+    }
+
+    @ReactMethod
+    public void release() {
+        Assertions.assertNotNull(player);
         player.release();
         player = null;
+
+        // clear setInterval
+        handle.invalidate();
     }
 
     @ReactMethod
@@ -177,36 +206,106 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
         playerControl.seekTo(timeMillis);
     }
 
+    @ReactMethod
+    public void canPause(Callback cb) {
+        Assertions.assertNotNull(player);
+        cb.invoke(playerControl.canPause());
+    }
+
+    @ReactMethod
+    public void canSeekBackward(Callback cb) {
+        Assertions.assertNotNull(player);
+        cb.invoke(playerControl.canSeekBackward());
+    }
+
+    @ReactMethod
+    public void canSeekForward(Callback cb) {
+        Assertions.assertNotNull(player);
+        cb.invoke(playerControl.canSeekForward());
+    }
+
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
         WritableMap params = Arguments.createMap();
-        switch (playbackState) {
-            // event list from official demo example
-            case ExoPlayer.STATE_BUFFERING:
-                sendEvent("buffering", params);
-                break;
-            case ExoPlayer.STATE_ENDED:
-                player.release();
-                player = null;
-                sendEvent("end", params);
-                break;
-            case ExoPlayer.STATE_IDLE:
-                sendEvent("idle", params);
-                break;
-            case ExoPlayer.STATE_PREPARING:
-                sendEvent("preparing", params);
-                break;
-            case ExoPlayer.STATE_READY:
-                sendEvent("ready", params);
-                break;
+        params.putBoolean("playWhenReady", playWhenReady);
+        params.putInt("playbackState", playbackState);
+
+        /*
+            STATE_IDLE          : 1
+            STATE_PREPARING     : 2
+            STATE_BUFFERING     : 3
+            STATE_READY         : 4
+            STATE_ENDED         : 5
+        */
+
+        if(playbackState == ExoPlayer.STATE_ENDED) {
+            player.stop();
+            playerControl.seekTo(0);
         }
+
+        sendEvent("onPlayerStateChanged", params);
     }
 
-    public void onLoadCompleted(int sourceId, long bytesLoaded, int type, int trigger, Format format,
-           long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs) {
-        // to make sure media is loaded
+    public void onUpdatePosition() {
+
+        // Remove previous timer
+        if (handle != null) {
+            handle.invalidate();
+        }
+
+        handle = JavaScriptTimer.setInterval(new Runnable() {
+            public void run() {
+                int currentPosition = playerControl.getCurrentPosition();
+
+                WritableMap params = Arguments.createMap();
+                params.putInt("currentPosition", currentPosition);
+
+                sendEvent("onUpdatePosition", params);
+            }
+        }, 200);
+    }
+
+    /**
+     *  Invoked when the current load operation completes.
+    */
+    public void onLoadCompleted(
+        int sourceId,
+        long bytesLoaded,
+        int type,
+        int trigger,
+        Format format,
+        long mediaStartTimeMs,
+        long mediaEndTimeMs,
+        long elapsedRealtimeMs,
+        long loadDurationMs) {
+
+        // Please refer to the link below about how to use WritableMap
+        // https://github.com/facebook/react-native/blob/master/ReactAndroid/src/main/java/com/facebook/react/bridge/WritableMap.java
         WritableMap params = Arguments.createMap();
-        sendEvent("loadCompleted", params);
+        params.putInt("sourceId", sourceId);
+        params.putDouble("bytesLoaded", bytesLoaded);
+        params.putInt("type", type);
+        params.putInt("trigger", trigger);
+        params.putDouble("mediaStartTimeMs", mediaStartTimeMs);
+        params.putDouble("mediaEndTimeMs", mediaEndTimeMs);
+        params.putDouble("elapsedRealtimeMs", elapsedRealtimeMs);
+        params.putDouble("loadDurationMs", loadDurationMs);
+
+        WritableMap subParams = Arguments.createMap();
+        subParams.putInt("audioChannels", format.audioChannels);
+        subParams.putInt("audioSamplingRate", format.audioSamplingRate);
+        subParams.putInt("bitrate", format.bitrate);
+        subParams.putString("codecs", format.codecs);
+        subParams.putDouble("frameRate", format.frameRate);
+        subParams.putInt("height", format.height);
+        subParams.putString("id", format.id);
+        subParams.putString("language", format.language);
+        subParams.putString("mimeType", format.mimeType);
+        subParams.putInt("width", format.width);
+
+        params.putMap("format", subParams);
+
+        sendEvent("onLoadCompleted", params);
     }
 
     @Override
@@ -218,6 +317,6 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
     public void onPlayerError(ExoPlaybackException error) {
         WritableMap params = Arguments.createMap();
         params.putString("msg", error.getMessage());
-        sendEvent("error", params);
+        sendEvent("onPlayerError", params);
     }
 }
