@@ -60,8 +60,8 @@ RCT_EXPORT_METHOD(prepare:(NSString *)url:(BOOL) bAutoPlay) {
 
 -(void)playFinished:(NSNotification *)notification{
   [self.playerItem seekToTime:kCMTimeZero];
-  [self.bridge.eventDispatcher sendDeviceEventWithName: @"finishListener"
-                                                  body: @{@"status": @"finished" }];
+  [self.bridge.eventDispatcher sendDeviceEventWithName: @"onPlayerStateChanged"
+                                                  body: @{@"playbackState": @5 }];
 }
 
 RCT_EXPORT_METHOD(stop) {
