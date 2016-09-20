@@ -14,5 +14,6 @@
 
 @property (strong, nonatomic) AVPlayerItem *playerItem;
 @property (strong, nonatomic) AVPlayer *player;
+@property (nonatomic, readwrite) BOOL isPlayingWithOthers;
 
 @end
