@@ -18,7 +18,9 @@
     NSTimer *timer;
     CMTime duration;
     CMTime currentTime;
-    
+    NSString *rapName;
+    NSString *songTitle;
+    NSURL *artWorkUrl;
 }
 
 @end
@@ -37,9 +39,9 @@ RCT_EXPORT_MODULE();
     self = [super init];
     if (self) {
         [self setSharedAudioSessionCategory];
-        [self registerAudioInterruptionNotifications];
+        //[self registerAudioInterruptionNotifications];
         [self registerRemoteControlEvents];
-        [self setNowPlayingInfo:true];
+        //[self setNowPlayingInfo:true];
         NSLog(@"AudioPlayer initialized");
     }
     
@@ -81,13 +83,14 @@ RCT_EXPORT_METHOD(prepare:(NSString *)url:(BOOL) bAutoPlay) {
     });
 }
 
-
--(void)playFinished:(NSNotification *)notification{
-    [self.playerItem seekToTime:kCMTimeZero];
-    [self.bridge.eventDispatcher sendDeviceEventWithName: @"onPlayerStateChanged"
-                                                    body: @{@"playbackState": @5 }];
+RCT_EXPORT_METHOD(songInfo:(NSString *)name title:(NSString *)title url:(NSURL *)url) {
+    NSLog(@"wasssup %@ %@ %@", name, title, url);
+    rapName = name;
+    songTitle = title;
+    artWorkUrl = url;
+    
+    [self setNowPlayingInfo:true];
 }
-
 
 RCT_EXPORT_METHOD(stop) {
     
@@ -117,6 +120,7 @@ RCT_EXPORT_METHOD(play) {
     
     [self activate];
     [self.player play];
+    [self setNowPlayingInfo:true];
     
     dispatch_async(dispatch_get_main_queue(), ^{
         timer = [NSTimer scheduledTimerWithTimeInterval:0.2 target:self selector:@selector(startSending:) userInfo:nil repeats:YES];
@@ -127,6 +131,7 @@ RCT_EXPORT_METHOD(play) {
 RCT_EXPORT_METHOD(resume) {
     
     [self.player play];
+    [self setNowPlayingInfo:true];
     
     dispatch_async(dispatch_get_main_queue(), ^{
         timer = [NSTimer scheduledTimerWithTimeInterval:0.2 target:self selector:@selector(startSending:) userInfo:nil repeats:YES];
@@ -151,6 +156,11 @@ RCT_EXPORT_METHOD(pause) {
 
 #pragma mark - Audio Session
 
+-(void)playFinished:(NSNotification *)notification{
+    [self.playerItem seekToTime:kCMTimeZero];
+    [self.bridge.eventDispatcher sendDeviceEventWithName: @"onPlayerStateChanged"
+                                                    body: @{@"playbackState": @5 }];
+}
 
 -(void)activate {
     
@@ -340,15 +350,22 @@ RCT_EXPORT_METHOD(pause) {
 - (void)setNowPlayingInfo:(bool)isPlaying
 {
     // TODO Get artwork from stream
-    // MPMediaItemArtwork *artwork = [[MPMediaItemArtwork alloc]initWithImage:[UIImage imageNamed:@"webradio1"]];
     
-    NSString* appName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleDisplayName"];
-    NSDictionary *nowPlayingInfo = [NSDictionary dictionaryWithObjectsAndKeys:
-                                    @"blah", MPMediaItemPropertyAlbumTitle,
-                                    @"", MPMediaItemPropertyAlbumArtist,
-                                    appName ? appName : @"", MPMediaItemPropertyTitle,
-                                    [NSNumber numberWithFloat:isPlaying ? 1.0f : 0.0],MPNowPlayingInfoPropertyPlaybackRate, nil];
-    [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = nowPlayingInfo;
+    float duration = CMTimeGetSeconds(self.playerItem.duration);
+    float durationInMilliSeconds = duration * 1000;
+    
+    UIImage *artWork = [UIImage imageWithData:[NSData dataWithContentsOfURL:artWorkUrl]];
+    MPMediaItemArtwork *albumArt = [[MPMediaItemArtwork alloc] initWithImage: artWork];
+    
+    MPNowPlayingInfoCenter *center = [MPNowPlayingInfoCenter defaultCenter];
+    NSDictionary *songInfo = @{
+                               MPMediaItemPropertyTitle: rapName,
+                               MPMediaItemPropertyArtist: songTitle,
+                               MPNowPlayingInfoPropertyPlaybackRate: [NSNumber numberWithFloat:isPlaying ? 1.0f : 0.0],
+                               MPMediaItemPropertyPlaybackDuration: [NSNumber numberWithFloat:duration],
+                               MPMediaItemPropertyArtwork: albumArt
+                               };
+    center.nowPlayingInfo = songInfo;
 }
 
 
