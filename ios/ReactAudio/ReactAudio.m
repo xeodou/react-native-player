@@ -131,7 +131,7 @@ RCT_EXPORT_METHOD(seekTo:(int) nSecond) {
     __weak typeof(self) weakSelf = self;
     
     playbackTimeObserver =
-    [self.player addPeriodicTimeObserverForInterval:CMTimeMakeWithSeconds(0.2, NSEC_PER_SEC) queue:dispatch_get_main_queue() usingBlock:^(CMTime time) {
+    [self.player addPeriodicTimeObserverForInterval:CMTimeMakeWithSeconds(1.0, NSEC_PER_SEC) queue:dispatch_get_main_queue() usingBlock:^(CMTime time) {
         
         [weakSelf.bridge.eventDispatcher sendDeviceEventWithName: @"onUpdatePosition"
                                                         body: @{@"currentPosition": @(CMTimeGetSeconds(time)*1000) }];

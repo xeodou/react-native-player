@@ -134,8 +134,8 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
         Assertions.assertNotNull(player);
         playerControl.start();
 
-        // clear setInterval
-        handle.invalidate();
+        // Send event for current position to JS
+        onUpdatePosition();
     }
 
     @ReactMethod
@@ -262,7 +262,7 @@ public class ReactAudio extends ReactContextBaseJavaModule implements ExoPlayer.
 
                 sendEvent("onUpdatePosition", params);
             }
-        }, 200);
+        }, 1000);
     }
 
     /**
